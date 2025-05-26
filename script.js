@@ -58,22 +58,44 @@ if (formLogin) {
 
 function muatSoal() {
     fetch('https://raw.githubusercontent.com/NardoTuns/kuis/main/soal.csv')
-        .then(response => response.text())
+        .then(response => {
+            if (!response.ok) throw new Error("File tidak ditemukan");
+            return response.text();
+        })
         .then(data => {
-            // Parse data CSV
             daftarSoal = parseCSV(data);
+            if(daftarSoal.length === 0) throw new Error("Tidak ada soal yang dimuat");
+            
             totalSoalSpan.textContent = daftarSoal.length;
-            
-            // Inisialisasi array jawaban
             jawabanPengguna = new Array(daftarSoal.length).fill(null);
-            
-            // Tampilkan soal pertama
             tampilkanSoal(indeksSoalSekarang);
         })
         .catch(error => {
-            console.error('Gagal memuat soal:', error);
-            alert('Gagal memuat soal. Silakan coba lagi.');
+            console.error('Error:', error);
+            alert('Gagal memuat soal: ' + error.message);
+            // Load contoh soal jika gagal
+            loadContohSoal();
         });
+}
+
+function loadContohSoal() {
+    daftarSoal = [
+        {
+            pertanyaan: "Contoh soal 1: Apa ibukota Indonesia?",
+            gambar: "",
+            pilihan: ["Jakarta", "Bandung", "Surabaya", "Medan"],
+            kunci: "A"
+        },
+        {
+            pertanyaan: "Contoh soal 2: Berapa 2+2?",
+            gambar: "",
+            pilihan: ["3", "4", "5", "6"],
+            kunci: "B"
+        }
+    ];
+    totalSoalSpan.textContent = daftarSoal.length;
+    jawabanPengguna = new Array(daftarSoal.length).fill(null);
+    tampilkanSoal(indeksSoalSekarang);
 }
 
 function parseCSV(dataCSV) {
