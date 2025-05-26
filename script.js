@@ -57,7 +57,7 @@ if (formLogin) {
 }
 
 function muatSoal() {
-    fetch('https://raw.githubusercontent.com/NardoTuns/kuis/main/soal.csv')
+    fetch('https://github.com/NardoTuns/kuis/blob/b2623a86374eb77a7b6f69ce4f5ee03fe85b08b2/soal.csv')
         .then(response => {
             if (!response.ok) throw new Error("File tidak ditemukan");
             return response.text();
