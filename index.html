@@ -6,10 +6,27 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Kuis Pengetahuan Umum</h1>
-  <div id="quiz-container"></div>
-  <button id="submit">Kumpulkan Jawaban</button>
-  <div id="result"></div>
+  <!-- Halaman Login -->
+  <div id="login-section">
+    <h2>Login untuk Mengikuti Kuis</h2>
+    <label>Nama:</label><br>
+    <input type="text" id="nama"><br><br>
+    <label>Kelas:</label><br>
+    <input type="text" id="kelas"><br><br>
+    <label>Password:</label><br>
+    <input type="password" id="password"><br><br>
+    <button onclick="login()">Masuk</button>
+    <p id="login-error" style="color: red;"></p>
+  </div>
+
+  <!-- Halaman Kuis -->
+  <div id="quiz-section" style="display: none;">
+    <h1>Kuis Pengetahuan Umum</h1>
+    <p id="user-info"></p>
+    <div id="quiz-container"></div>
+    <button id="submit">Kumpulkan Jawaban</button>
+    <div id="result"></div>
+  </div>
 
   <script src="script.js"></script>
 </body>
