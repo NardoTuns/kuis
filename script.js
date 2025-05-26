@@ -57,7 +57,7 @@ if (formLogin) {
 }
 
 function muatSoal() {
-    fetch('soal.csv')
+    fetch('https://raw.githubusercontent.com/NardoTuns/kuis/main/soal.csv')
         .then(response => response.text())
         .then(data => {
             // Parse data CSV
