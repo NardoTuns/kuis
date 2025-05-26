@@ -1,217 +1,53 @@
-// Variabel global
-let penggunaSekarang = '';
-let daftarSoal = [];
-let indeksSoalSekarang = 0;
-let jawabanPengguna = [];
-let skor = 0;
-
-// Elemen DOM
-const formLogin = document.getElementById('loginForm');
-const formKuis = document.getElementById('quizForm');
-const tombolSebelumnya = document.getElementById('prev-btn');
-const tombolSelanjutnya = document.getElementById('next-btn');
-const tombolSelesai = document.getElementById('submit-btn');
-const teksSoal = document.getElementById('question-text');
-const containerPilihan = document.getElementById('options-container');
-const gambarSoal = document.getElementById('question-image');
-const progressKuis = document.getElementById('quiz-progress');
-const totalSoalSpan = document.getElementById('total-questions');
-const containerHasil = document.getElementById('result-container');
-const spanSkor = document.getElementById('score');
-const spanTotal = document.getElementById('total');
-const infoPengguna = document.getElementById('user-info');
-
-// Cek apakah kita di halaman login atau kuis
-if (formLogin) {
-    // Logika halaman login
-    formLogin.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const nama = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        
-        // Validasi sederhana
-        if (nama && password) {
-            penggunaSekarang = nama;
-            localStorage.setItem('penggunaSekarang', penggunaSekarang);
-            window.location.href = 'kuis.html';
-        } else {
-            alert('Silakan isi nama dan password!');
-        }
-    });
-} else if (formKuis) {
-    // Logika halaman kuis
-    document.addEventListener('DOMContentLoaded', function() {
-        // Ambil data pengguna dari localStorage
-        penggunaSekarang = localStorage.getItem('penggunaSekarang') || 'Pengguna';
-        infoPengguna.textContent = `Halo, ${penggunaSekarang}`;
-        
-        // Muat soal dari CSV
-        muatSoal();
+fetch('soal.txt')
+  .then(res => res.text())
+  .then(data => {
+    const questions = data.trim().split('\n\n').map(block => {
+      const lines = block.split('\n');
+      const question = lines[0];
+      const options = lines.slice(1).map(line => {
+        const isCorrect = line.includes('*');
+        return {
+          text: line.replace('*', '').trim(),
+          correct: isCorrect
+        };
+      });
+      return { question, options };
     });
 
-    // Tombol navigasi
-    tombolSebelumnya.addEventListener('click', tampilkanSoalSebelumnya);
-    tombolSelanjutnya.addEventListener('click', tampilkanSoalSelanjutnya);
-    tombolSelesai.addEventListener('click', tampilkanHasil);
-}
+    const container = document.getElementById('quiz-container');
 
-function muatSoal() {
-    fetch('https://github.com/NardoTuns/kuis/blob/b2623a86374eb77a7b6f69ce4f5ee03fe85b08b2/soal.csv')
-        .then(response => {
-            if (!response.ok) throw new Error("File tidak ditemukan");
-            return response.text();
-        })
-        .then(data => {
-            daftarSoal = parseCSV(data);
-            if(daftarSoal.length === 0) throw new Error("Tidak ada soal yang dimuat");
-            
-            totalSoalSpan.textContent = daftarSoal.length;
-            jawabanPengguna = new Array(daftarSoal.length).fill(null);
-            tampilkanSoal(indeksSoalSekarang);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Gagal memuat soal: ' + error.message);
-            // Load contoh soal jika gagal
-            loadContohSoal();
-        });
-}
+    questions.forEach((q, i) => {
+      const div = document.createElement('div');
+      div.className = 'question';
+      const qText = document.createElement('p');
+      qText.textContent = q.question;
+      div.appendChild(qText);
 
-function loadContohSoal() {
-    daftarSoal = [
-        {
-            pertanyaan: "Contoh soal 1: Apa ibukota Indonesia?",
-            gambar: "",
-            pilihan: ["Jakarta", "Bandung", "Surabaya", "Medan"],
-            kunci: "A"
-        },
-        {
-            pertanyaan: "Contoh soal 2: Berapa 2+2?",
-            gambar: "",
-            pilihan: ["3", "4", "5", "6"],
-            kunci: "B"
-        }
-    ];
-    totalSoalSpan.textContent = daftarSoal.length;
-    jawabanPengguna = new Array(daftarSoal.length).fill(null);
-    tampilkanSoal(indeksSoalSekarang);
-}
-
-function parseCSV(dataCSV) {
-    const baris = dataCSV.split('\n');
-    const soal = [];
-    
-    // Lewati baris header jika ada
-    const barisAwal = baris[0].includes('Pertanyaan') ? 1 : 0;
-    
-    for (let i = barisAwal; i < baris.length; i++) {
-        if (baris[i].trim() === '') continue;
-        
-        const bagian = baris[i].split(';');
-        if (bagian.length >= 6) {
-            const soalBaru = {
-                pertanyaan: bagian[0].trim(),
-                gambar: bagian[1].trim(),
-                pilihan: bagian.slice(2, 6).map(opt => opt.trim()),
-                kunci: bagian[6].trim()
-            };
-            soal.push(soalBaru);
-        }
-    }
-    
-    return soal;
-}
-
-function tampilkanSoal(indeks) {
-    if (indeks < 0 || indeks >= daftarSoal.length) return;
-    
-    const soal = daftarSoal[indeks];
-    
-    // Update teks soal
-    teksSoal.textContent = soal.pertanyaan;
-    
-    // Update gambar jika ada
-    gambarSoal.innerHTML = '';
-    if (soal.gambar && soal.gambar !== 'null' && soal.gambar !== '') {
-        const img = document.createElement('img');
-        img.src = `Gambar/${soal.gambar}`;
-        img.alt = 'Gambar soal';
-        gambarSoal.appendChild(img);
-    }
-    
-    // Update pilihan jawaban
-    containerPilihan.innerHTML = '';
-    soal.pilihan.forEach((pilihan, i) => {
-        const divPilihan = document.createElement('div');
-        divPilihan.className = 'option';
-        
-        const input = document.createElement('input');
-        input.type = 'radio';
-        input.name = 'jawaban';
-        input.id = `pilihan-${i}`;
-        input.value = String.fromCharCode(65 + i); // A, B, C, D
-        
-        // Cek jika pilihan ini sudah dipilih sebelumnya
-        if (jawabanPengguna[indeks] === input.value) {
-            input.checked = true;
-        }
-        
+      q.options.forEach((opt, j) => {
         const label = document.createElement('label');
-        label.htmlFor = `pilihan-${i}`;
-        label.textContent = pilihan;
-        
-        divPilihan.appendChild(input);
-        divPilihan.appendChild(label);
-        containerPilihan.appendChild(divPilihan);
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = `q${i}`;
+        radio.value = j;
+        label.appendChild(radio);
+        label.append(` ${opt.text}`);
+        div.appendChild(label);
+        div.appendChild(document.createElement('br'));
+      });
+
+      container.appendChild(div);
     });
-    
-    // Update tombol navigasi
-    tombolSebelumnya.disabled = indeks === 0;
-    tombolSelanjutnya.style.display = indeks === daftarSoal.length - 1 ? 'none' : 'block';
-    tombolSelesai.style.display = indeks === daftarSoal.length - 1 ? 'block' : 'none';
-    
-    // Update progress
-    document.getElementById('current-question').textContent = indeks + 1;
-    
-    // Simpan indeks soal sekarang
-    indeksSoalSekarang = indeks;
-}
 
-function tampilkanSoalSelanjutnya() {
-    // Simpan jawaban saat ini
-    const pilihanTerpilih = document.querySelector('input[name="jawaban"]:checked');
-    if (pilihanTerpilih) {
-        jawabanPengguna[indeksSoalSekarang] = pilihanTerpilih.value;
-    }
-    
-    // Tampilkan soal berikutnya
-    tampilkanSoal(indeksSoalSekarang + 1);
-}
-
-function tampilkanSoalSebelumnya() {
-    // Tampilkan soal sebelumnya
-    tampilkanSoal(indeksSoalSekarang - 1);
-}
-
-function tampilkanHasil() {
-    // Simpan jawaban terakhir
-    const pilihanTerpilih = document.querySelector('input[name="jawaban"]:checked');
-    if (pilihanTerpilih) {
-        jawabanPengguna[indeksSoalSekarang] = pilihanTerpilih.value;
-    }
-    
-    // Hitung skor
-    skor = 0;
-    for (let i = 0; i < daftarSoal.length; i++) {
-        if (jawabanPengguna[i] === daftarSoal[i].kunci) {
-            skor++;
+    document.getElementById('submit').addEventListener('click', () => {
+      let score = 0;
+      questions.forEach((q, i) => {
+        const selected = document.querySelector(`input[name="q${i}"]:checked`);
+        if (selected && q.options[selected.value].correct) {
+          score++;
         }
-    }
-    
-    // Sembunyikan form kuis dan tampilkan hasil
-    formKuis.style.display = 'none';
-    containerHasil.style.display = 'block';
-    spanSkor.textContent = skor;
-    spanTotal.textContent = daftarSoal.length;
-}
+      });
+
+      document.getElementById('result').textContent =
+        `Skor kamu: ${score} dari ${questions.length}`;
+    });
+  });
